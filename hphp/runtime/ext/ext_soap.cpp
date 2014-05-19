@@ -2211,50 +2211,42 @@ void c_SoapServer::t_handle(const String& request /* = null_string */) {
     }
 
     String fn_name = h->function_name;
-    if (valid_function(this, soap_obj, fn_name)) {
-      try {
-        if (m_type == SOAP_CLASS || m_type == SOAP_OBJECT) {
-          h->retval = vm_call_user_func
-            (make_packed_array(soap_obj, fn_name), h->parameters);
-        } else {
-          h->retval = vm_call_user_func(fn_name, h->parameters);
-        }
-      } catch (Exception &e) {
-        send_soap_server_fault(function, e, h);
-        return;
+    try {
+      if (m_type == SOAP_CLASS || m_type == SOAP_OBJECT) {
+        h->retval = vm_call_user_func
+          (make_packed_array(soap_obj, fn_name), h->parameters);
+      } else {
+        h->retval = vm_call_user_func(fn_name, h->parameters);
       }
-      if (h->retval.isObject() &&
-          h->retval.getObjectData()->instanceof(SystemLib::s_SoapFaultClass)) {
-        send_soap_server_fault(function, h->retval, h);
-        return;
-      }
-    } else if (h->mustUnderstand) {
-      throw_soap_server_fault("MustUnderstand","Header not understood");
+    } catch (Exception &e) {
+      send_soap_server_fault(function, e, h);
+      return;
+    }
+    if (h->retval.isObject() &&
+        h->retval.getObjectData()->instanceof(SystemLib::s_SoapFaultClass)) {
+      send_soap_server_fault(function, h->retval, h);
+      return;
     }
   }
 
   // 5. main call
   String fn_name = function_name;
   Variant retval;
-  if (valid_function(this, soap_obj, fn_name)) {
-    try {
-      if (m_type == SOAP_CLASS || m_type == SOAP_OBJECT) {
-        retval = vm_call_user_func
-          (make_packed_array(soap_obj, fn_name), params);
-      } else {
-        retval = vm_call_user_func(fn_name, params);
-      }
-    } catch (Exception &e) {
-      send_soap_server_fault(function, e, NULL);
-      return;
+  try {
+    if (m_type == SOAP_CLASS || m_type == SOAP_OBJECT) {
+      retval = vm_call_user_func
+        (make_packed_array(soap_obj, fn_name), params);
+    } else {
+      retval = vm_call_user_func(fn_name, params);
     }
-    if (retval.isObject() &&
-        retval.toObject()->instanceof(SystemLib::s_SoapFaultClass)) {
-      send_soap_server_fault(function, retval, NULL);
-      return;
-    }
-  } else {
-    throw SoapException("Function '%s' doesn't exist", fn_name.data());
+  } catch (Exception &e) {
+    send_soap_server_fault(function, e, NULL);
+    return;
+  }
+  if (retval.isObject() &&
+      retval.toObject()->instanceof(SystemLib::s_SoapFaultClass)) {
+    send_soap_server_fault(function, retval, NULL);
+    return;
   }
 
   // 6. serialize response
