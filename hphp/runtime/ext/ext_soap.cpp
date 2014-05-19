@@ -1085,8 +1085,8 @@ static int serialize_response_call2(xmlNodePtr body, sdlFunction *function,
     sdlSoapBindingFunctionPtr fnb = function->bindingAttributes;
     style = fnb->style;
     use = fnb->output.use;
-      ns = encode_add_ns(body, fnb->output.ns.c_str());
     if (style == SOAP_RPC) {
+      ns = encode_add_ns(body, fnb->output.ns.c_str());
       if (!function->responseName.empty()) {
         method = xmlNewChild(body, ns,
                              BAD_CAST(function->responseName.c_str()), NULL);
